@@ -3,5 +3,5 @@ requests~=2.26.0
 colorama~=0.4.4
 youtube_dl
 PyNaCl
-ffmpeg
+ffmpeg-
 Pillow~=8.4.0
