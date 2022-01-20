@@ -174,10 +174,10 @@ async def unban(ctx, *, member):
 # Фильтр чата
 @client.event
 async def on_message(message):
-    author=message.author
+    author = message.author
     bad_word = ['блядь', 'сука', 'ебал', 'заебал', 'пошел нахуй', 'иди в задницу', 'блять', 'бля', 'иди нахуй',
                 'пошел нахуй', 'хуй', 'охуел', 'oxyeл', 'ебал', 'oхyел', 'охyeл', 'oxуел', 'иди нaxyй', 'иди наxуй',
-                'иди нахyй', "соси", 'иди нах', 'Иди нах','пошёл нахуй','Пошёл нахуй']
+                'иди нахyй', "соси", 'иди нах', 'Иди нах', 'пошёл нахуй', 'Пошёл нахуй']
     await client.process_commands(message)
     msg = message.content.lower()
     if msg in bad_word:
@@ -190,7 +190,7 @@ async def on_message(message):
         else:
             await message.author.send(f'{message.author.name},Плохой мальчик твой Ass в опасности')
         AddXpToUser(-10, message.author.id)
-        
+
 
     elif not (message.content == "" or message.content is None or message.content == "\n"):
         print(message.content)
@@ -291,6 +291,7 @@ async def help(ctx):
     emb.add_field(name='{}profile'.format((command_prefix)), value='Посмотреть на сколько ты прокачен')
     await ctx.send(embed=emb)
 
+
 @client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
 async def hello(ctx):
     author = ctx.message.author
@@ -328,6 +329,42 @@ async def watch(ctx):
     link = json.loads(response.content)
     print(json.loads(response.content))
     await ctx.send(f"https://discord.com/invite/{link['code']}")
+
+
+@client.command(aliases=['stats', 'ss'])
+async def server_stats(ctx: discord.ext.commands.Context):
+    embed = discord.embeds.Embed()
+
+    members = ctx.guild.members
+    Botsies = 0
+    Realman = 0
+    MemberCount = 0
+    online = 0
+    offline = 0
+    idle = 0
+    dnd = 0
+
+    for member in members:
+        member: discord.member = member
+        MemberCount += 1
+        if member.bot:
+            Botsies += 1
+        else:
+            Realman += 1
+
+        if member.raw_status == "online":
+            online += 1
+        elif member.raw_status == "offline":
+            offline += 1
+        elif member.raw_status == "idle":
+            idle += 1
+        elif member.raw_status == "dnd":
+            dnd += 1
+
+    embed.add_field(name="\n:busts_in_silhouette: Члены :busts_in_silhouette:", value=f"🤖 Боты: {Botsies}\n\n :bust_in_silhouette: Люди: {Realman} \n\n :busts_in_silhouette: Всего: {MemberCount}")
+    embed.add_field(name="\nПо статусу", value=f"Онлайн: {online}\n\n оффлайн: {offline} \n\n Не беспокоить: {dnd} \n\n Не активен: {idle}")
+
+    await ctx.send("Стата", embed=embed)
 
 
 init()
