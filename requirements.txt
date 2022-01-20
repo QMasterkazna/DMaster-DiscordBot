@@ -1,0 +1,12 @@
+discord
+random
+requests
+asyncio
+json
+youtube_dl
+datetime
+_pickle
+colorama
+ConfigConstants
+math
+music_module
