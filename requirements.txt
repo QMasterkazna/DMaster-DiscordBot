@@ -1,4 +1,5 @@
-discord
-requests
-youtube_dl
-colorama
+discord~=1.7.3
+requests~=2.26.0
+colorama~=0.4.4
+
+Pillow~=8.4.0
