@@ -1,9 +1,6 @@
 discord
-random
 requests
 asyncio
 json
 youtube_dl
-datetime
 colorama
-math
