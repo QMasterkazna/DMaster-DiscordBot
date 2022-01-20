@@ -173,8 +173,8 @@ async def unban(ctx, *, member):
 
 # Фильтр чата
 @client.event
-async def on_message(message,ctx):
-    author=ctx.message.author
+async def on_message(message):
+    author=message.author
     bad_word = ['блядь', 'сука', 'ебал', 'заебал', 'пошел нахуй', 'иди в задницу', 'блять', 'бля', 'иди нахуй',
                 'пошел нахуй', 'хуй', 'охуел', 'oxyeл', 'ебал', 'oхyел', 'охyeл', 'oxуел', 'иди нaxyй', 'иди наxуй',
                 'иди нахyй', "соси", 'иди нах', 'Иди нах','пошёл нахуй','Пошёл нахуй']
