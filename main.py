@@ -267,23 +267,21 @@ async def play_custom(ctx):
 # help
 @client.command(pass_context=True, aliases=['Помощь', 'Help'])
 async def help(ctx):
-    emb = discord.Embed(title='Навигация по командам')
-    emb.add_field(name='{}watch'.format(command_prefix), value='Смотреть ютуб')
+    emb = discord.Embed(title='Навигация по командам:')
     emb.add_field(name='{}очистка'.format(command_prefix), value='Очистка чата')
     emb.add_field(name='{}бан'.format(command_prefix), value='Заблокировать пользователя')
     emb.add_field(name='{}кик'.format(command_prefix), value='Выгнать пользователя')
     emb.add_field(name='{}разбан'.format(command_prefix), value='Разблокировать пользователя')
-    emb.add_field(name='{}Привет'.format(command_prefix), value='По здароваться с Билли')
     emb.add_field(name="{}мьют".format(command_prefix), value='Замьютить пользователя')
     emb.add_field(name='{}размьют'.format(command_prefix), value='Размьютить пользователя')
     emb.add_field(name='{}Билли'.format(command_prefix), value='Ну введи посмари что выдает')
     emb.add_field(name='{}играть'.format(command_prefix), value='Ну введи посмари что выдает')
     emb.add_field(name='{}gym'.format(command_prefix), value='Ну введи посмари что даст, отказываться нельзя')
     emb.add_field(name='{}run'.format(command_prefix), value='Бежим вместе с Билли')
-    emb.add_field(name='{}join'.format(command_prefix),
-                  value='Чтобы Билли присоединился к вам(для проигрывания музыки)')
     emb.add_field(name='{}play'.format(command_prefix),
                   value='Запустить музыку')
+    emb.add_field(name='{}Привет'.format(command_prefix), value='По здароваться с Билли')
+    emb.add_field(name='{}watch'.format(command_prefix), value='Смотреть ютуб')
     emb.add_field(name='{}pause'.format(command_prefix), value='Остановить музыку')
     emb.add_field(name='{}resume'.format(command_prefix), value='Продолжить музыку')
     emb.add_field(name='{}disconnect'.format(command_prefix), value='Чтобы Бот отключился от голосового')
