@@ -112,7 +112,6 @@ async def MapXp(ctx):
             dataBase[member.id] = 0
     save()
 
-
 @client.command(pass_context=True, aliases=["addxp"])
 @commands.has_permissions(administrator=True)
 async def AddXp(ctx, member: discord.Member, points: int):
@@ -268,26 +267,8 @@ async def play_custom(ctx):
 @client.command(pass_context=True, aliases=['Помощь', 'Help'])
 async def help(ctx):
     emb = discord.Embed(title='Навигация по командам:')
-    emb.add_field(name='{}очистка'.format(command_prefix), value='Очистка чата')
-    emb.add_field(name='{}бан'.format(command_prefix), value='Заблокировать пользователя')
-    emb.add_field(name='{}кик'.format(command_prefix), value='Выгнать пользователя')
-    emb.add_field(name='{}разбан'.format(command_prefix), value='Разблокировать пользователя')
-    emb.add_field(name="{}мьют".format(command_prefix), value='Замьютить пользователя')
-    emb.add_field(name='{}размьют'.format(command_prefix), value='Размьютить пользователя')
-    emb.add_field(name='{}Билли'.format(command_prefix), value='Ну введи посмари что выдает')
-    emb.add_field(name='{}играть'.format(command_prefix), value='Ну введи посмари что выдает')
-    emb.add_field(name='{}gym'.format(command_prefix), value='Ну введи посмари что даст, отказываться нельзя')
-    emb.add_field(name='{}run'.format(command_prefix), value='Бежим вместе с Билли')
-    emb.add_field(name='{}play'.format(command_prefix),
-                  value='Запустить музыку')
-    emb.add_field(name='{}Привет'.format(command_prefix), value='По здароваться с Билли')
-    emb.add_field(name='{}watch'.format(command_prefix), value='Смотреть ютуб')
-    emb.add_field(name='{}pause'.format(command_prefix), value='Остановить музыку')
-    emb.add_field(name='{}resume'.format(command_prefix), value='Продолжить музыку')
-    emb.add_field(name='{}disconnect'.format(command_prefix), value='Чтобы Бот отключился от голосового')
-    emb.add_field(name='{}cum'.format((command_prefix)), value='Введи но будь осторожен')
-    emb.add_field(name='{}profile'.format((command_prefix)), value='Посмотреть на сколько ты прокачен')
-    await ctx.send(embed=emb)
+    emb.add_field(name='{}команды для админов:'.format(command_prefix),value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
+    emb.add_field(name='{}команды для пользователей:'.format(command_prefix),value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
 
 
 @client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
@@ -359,11 +340,12 @@ async def server_stats(ctx: discord.ext.commands.Context):
         elif member.raw_status == "dnd":
             dnd += 1
 
-    embed.add_field(name="\n:busts_in_silhouette: Члены :busts_in_silhouette:", value=f"🤖 Боты: {Botsies}\n\n :bust_in_silhouette: Люди: {Realman} \n\n :busts_in_silhouette: Всего: {MemberCount}")
-    embed.add_field(name="\nПо статусу", value=f"Онлайн: {online}\n\n оффлайн: {offline} \n\n Не беспокоить: {dnd} \n\n Не активен: {idle}")
+    embed.add_field(name="\n:busts_in_silhouette: Члены :busts_in_silhouette:",
+                    value=f"🤖 Боты: {Botsies}\n\n :bust_in_silhouette: Люди: {Realman} \n\n :busts_in_silhouette: Всего: {MemberCount}")
+    embed.add_field(name="\nПо статусу",
+                    value=f"Онлайн: {online}\n\n оффлайн: {offline} \n\n Не беспокоить: {dnd} \n\n Не активен: {idle}")
 
     await ctx.send("Стата", embed=embed)
-
 
 init()
 
