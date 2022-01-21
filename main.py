@@ -269,7 +269,7 @@ async def help(ctx):
     emb = discord.Embed(title='Навигация по командам:')
     emb.add_field(name='{}команды для админов:'.format(command_prefix),value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
     emb.add_field(name='{}команды для пользователей:'.format(command_prefix),value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
-
+    await ctx.send(embed=emb)
 
 @client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
 async def hello(ctx):
