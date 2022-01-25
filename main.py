@@ -13,7 +13,6 @@ import colorama as col
 import ConfigConstants as CC
 from math import sqrt, floor
 import Logger
-import profanity_filter
 
 from music_module import Music
 import status
