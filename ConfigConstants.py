@@ -17,3 +17,69 @@ filename = "database.pkl"
 # idraw.text((145, 70), f'status:{ctx.author.status}', font=undertext)
 # img.save('user_card.png')
 # await ctx.send(file=discord.File(fp='user_card.png'))
+# Фильтр чата
+#@client.event
+#async def on_message(message):
+#    author = message.author
+    # bad_word = ['блядь', 'сука', 'ебал', 'заебал', 'пошел нахуй', 'иди в задницу', 'блять', 'бля', 'иди нахуй',
+    #             'пошел нахуй', 'хуй', 'охуел', 'oxyeл', 'ебал', 'oхyел', 'охyeл', 'oxуел', 'иди нaxyй', 'иди наxуй',
+    #             'иди нахyй', "соси", 'иди нах', 'Иди нах', 'пошёл нахуй', 'Пошёл нахуй']
+    # await client.process_commands(message)
+ #   msg = message.content.lower()
+
+  #  pf = profanity_filter.ProfanityFilter(languages=["ru", "en"])
+
+   # print(pf.censor(msg))
+
+    #is_dirty = pf.is_profane(msg)
+    #if is_dirty:
+     #   await message.delete()
+      #  a = random.randint(1, 2)
+       # if a == 1:
+        #    await message.author.send(f'{message.author.name},Мы культурные, не матерись, иначе проникну в твой Ass')
+        #elif a == 2:
+         #   await message.author.send(f'{message.author.name},В следущий раз твой Ass будет в опасности')
+        #else:
+         #   await message.author.send(f'{message.author.name},Плохой мальчик твой Ass в опасности')
+        #AddXpToUser(-10, message.author.id)
+
+
+   # elif not (message.content == "" or message.content is None or message.content == "\n"):
+    #    logger.log(f"Message: {message.author} - {message.content}", "on_message")
+     #   if not (message.content.lower().startswith(";/")):
+     #       AddXpToUser(1, message.author.id)
+   # else:
+    #    logger.log(f"Message: {message.author} - {message.content}", "on_message")
+# Фильтр чата
+#@client.event
+#async def on_message(message):
+  #  author = message.author
+    # bad_word = ['блядь', 'сука', 'ебал', 'заебал', 'пошел нахуй', 'иди в задницу', 'блять', 'бля', 'иди нахуй',
+    #             'пошел нахуй', 'хуй', 'охуел', 'oxyeл', 'ебал', 'oхyел', 'охyeл', 'oxуел', 'иди нaxyй', 'иди наxуй',
+    #             'иди нахyй', "соси", 'иди нах', 'Иди нах', 'пошёл нахуй', 'Пошёл нахуй']
+    # await client.process_commands(message)
+    #msg = message.content.lower()
+
+   # pf = profanity_filter.ProfanityFilter(languages=["ru", "en"])
+
+    #rint(pf.censor(msg))
+
+    #is_dirty = pf.is_profane(msg)
+    #if is_dirty:
+       # await message.delete()
+       # a = random.randint(1, 2)
+       # if a == 1:
+        #    await message.author.send(f'{message.author.name},Мы культурные, не матерись, иначе проникну в твой Ass')
+        #elif a == 2:
+        #    await message.author.send(f'{message.author.name},В следущий раз твой Ass будет в опасности')
+       # else:
+      #      await message.author.send(f'{message.author.name},Плохой мальчик твой Ass в опасности')
+     #   AddXpToUser(-10, message.author.id)
+
+
+    #elif not (message.content == "" or message.content is None or message.content == "\n"):
+       # logger.log(f"Message: {message.author} - {message.content}", "on_message")
+      #  if not (message.content.lower().startswith(";/")):
+     #       AddXpToUser(1, message.author.id)
+    #else:
+     #   logger.log(f"Message: {message.author} - {message.content}", "on_message")

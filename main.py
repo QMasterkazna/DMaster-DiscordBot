@@ -12,6 +12,8 @@ import _pickle as pkl
 import colorama as col
 import ConfigConstants as CC
 from math import sqrt, floor
+import Logger
+import profanity_filter
 
 from music_module import Music
 import status
@@ -25,6 +27,7 @@ dataBase = {}
 
 playlist = []
 isPlayingNow = False
+logger = Logger.Logger()
 
 
 def CalcXpByFormula(x):
@@ -52,7 +55,6 @@ def DrawProgressBar(x):
 
     progressbar += f" {round(x * 100, 1)}%"
 
-    print(progressbar)
     return progressbar
 
 
@@ -73,31 +75,28 @@ def load():
     input = open(filename, "rb")
     try:
         dataBase = pkl.load(input)
-        print(dataBase)
         input.close()
     except EOFError:
-        print(col.Fore.RED + "Файл пустой")
+        logger.warn("Файл пустой", "Load")
     except FileNotFoundError:
-        print(col.Fore.RED + "Файл не найден")
+        logger.warn("Файл не найден", "Load")
 
 
 def save():
     output = open(filename, "wb")
 
     pkl.dump(dataBase, output, 2)
-    print(col.Fore.GREEN + "База Данных сохранена ♥")
+    logger.log("База Данных сохранена", "Save")
 
 
 def AddXpToUser(amount, UserId):
     global dataBase
     dataBase[UserId] += amount
-    print(dataBase[UserId])
+    logger.log(f"Added XP to {UserId} + {amount}", "AddXp")
     save()
 
 
 def GetUserXp(UserId):
-    print(UserId)
-    print(dataBase)
     return dataBase[UserId]
 
 
@@ -107,17 +106,14 @@ async def MapXp(ctx):
     global dataBase
     members = ctx.guild.members
     for member in members:
-        print(member.id)
         if dataBase.get(member.id) is None:
             dataBase[member.id] = 0
     save()
 
+
 @client.command(pass_context=True, aliases=["addxp"])
 @commands.has_permissions(administrator=True)
 async def AddXp(ctx, member: discord.Member, points: int):
-    print(ctx.message.content)
-    print(member.id)
-    print(points)
     AddXpToUser(points, member.id)
 
 
@@ -170,35 +166,6 @@ async def unban(ctx, *, member):
         return
 
 
-# Фильтр чата
-@client.event
-async def on_message(message):
-    author = message.author
-    bad_word = ['блядь', 'сука', 'ебал', 'заебал', 'пошел нахуй', 'иди в задницу', 'блять', 'бля', 'иди нахуй',
-                'пошел нахуй', 'хуй', 'охуел', 'oxyeл', 'ебал', 'oхyел', 'охyeл', 'oxуел', 'иди нaxyй', 'иди наxуй',
-                'иди нахyй', "соси", 'иди нах', 'Иди нах', 'пошёл нахуй', 'Пошёл нахуй']
-    await client.process_commands(message)
-    msg = message.content.lower()
-    if msg in bad_word:
-        await message.delete()
-        a = random.randint(1, 2)
-        if a == 1:
-            await message.author.send(f'{message.author.name},Мы культурные, не матерись, иначе проникну в твой Ass')
-        elif a == 2:
-            await message.author.send(f'{message.author.name},В следущий раз твой Ass будет в опасности')
-        else:
-            await message.author.send(f'{message.author.name},Плохой мальчик твой Ass в опасности')
-        AddXpToUser(-10, message.author.id)
-
-
-    elif not (message.content == "" or message.content is None or message.content == "\n"):
-        print(message.content)
-        if not (message.content.lower().startswith(";/")):
-            AddXpToUser(1, message.author.id)
-    else:
-        print(message.content)
-
-
 @client.command(aliases=['пошли в gym', 'хочу в gym'])
 async def gym(ctx):
     author = ctx.message.author
@@ -209,7 +176,6 @@ async def gym(ctx):
 @client.command(pass_context=True, aliases=['мьют'])
 @commands.has_permissions(administrator=True)
 async def mute(ctx, member: discord.Member, time: int = 60):
-    await ctx.channel.purge(limit=1)
     mute_role = discord.utils.get(ctx.message.guild.roles, name='Muted')
     await member.add_roles(mute_role)
     await ctx.send(f"{member.mention} Соси молча, и пей моё Wee wee")
@@ -224,7 +190,6 @@ async def profile(ctx, member: discord.Member = None):
     # TODO: Заставить базу данных работать правильно
     if member is None:
         member = ctx.author
-    print(type(member))
 
     emb = discord.embeds.Embed(title=f"{member.name}#{member.discriminator}")
     emb.add_field(name=f"id: {member.id}", value=f"status:{member.status}")
@@ -267,9 +232,12 @@ async def play_custom(ctx):
 @client.command(pass_context=True, aliases=['Помощь', 'Help'])
 async def help(ctx):
     emb = discord.Embed(title='Навигация по командам:')
-    emb.add_field(name='{}команды для админов:'.format(command_prefix),value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
-    emb.add_field(name='{}команды для пользователей:'.format(command_prefix),value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
+    emb.add_field(name='{}команды для админов:'.format(command_prefix),
+                  value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
+    emb.add_field(name='{}команды для пользователей:'.format(command_prefix),
+                  value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
     await ctx.send(embed=emb)
+
 
 @client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
 async def hello(ctx):
@@ -306,7 +274,6 @@ async def watch(ctx):
                              headers=headers)
 
     link = json.loads(response.content)
-    print(json.loads(response.content))
     await ctx.send(f"https://discord.com/invite/{link['code']}")
 
 
@@ -344,14 +311,32 @@ async def server_stats(ctx: discord.ext.commands.Context):
                     value=f"🤖 Боты: {Botsies}\n\n :bust_in_silhouette: Люди: {Realman} \n\n :busts_in_silhouette: Всего: {MemberCount}")
     embed.add_field(name="\nПо статусу",
                     value=f"Онлайн: {online}\n\n оффлайн: {offline} \n\n Не беспокоить: {dnd} \n\n Не активен: {idle}")
-
     await ctx.send("Стата", embed=embed)
 
-init()
 
-DrawProgressBar(0.56)
-DrawProgressBar(0.20)
-DrawProgressBar(0.75)
+async def RemapOnStart():
+    global dataBase
+    for guild in client.guilds:
+        logger.log(f"Mapping XP on start for {guild}", "RemapOnStart")
+        members = guild.members
+        for member in members:
+            logger.log(f"Mapped XP on start for {member} with id {member.id}", "RemapOnStart")
+            if dataBase.get(member.id) is None:
+                dataBase[member.id] = 0
+        save()
+
+
+@client.event
+async def on_connect():
+    await RemapOnStart()
+
+
+@client.event
+async def on_ready():
+    await RemapOnStart()
+
+
+init()
 
 # Connect
 client.run(Token)
