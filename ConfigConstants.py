@@ -83,3 +83,5 @@ filename = "database.pkl"
      #       AddXpToUser(1, message.author.id)
     #else:
      #   logger.log(f"Message: {message.author} - {message.content}", "on_message")
+#spacy
+#git+https://github.com/kmike/pymorphy2@ca1c13f6998ae2d835bdd5033c17197dcba84cf4#egg=pymorphy2
