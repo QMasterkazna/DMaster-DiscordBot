@@ -13,7 +13,8 @@ import colorama as col
 import ConfigConstants as CC
 from math import sqrt, floor
 import Logger
-
+import sqlite3
+from bs4 import BeautifulSoup
 from music_module import Music
 import status
 
@@ -108,12 +109,13 @@ async def MapXp(ctx):
         if dataBase.get(member.id) is None:
             dataBase[member.id] = 0
     save()
-
+    await ctx.send('база данных сохранена')
 
 @client.command(pass_context=True, aliases=["addxp"])
 @commands.has_permissions(administrator=True)
 async def AddXp(ctx, member: discord.Member, points: int):
     AddXpToUser(points, member.id)
+    await ctx.send('Профиль изменён')
 
 
 # clear message
@@ -124,7 +126,7 @@ async def Clear(ctx, amount=100):
 
 
 # clear command
-@client.command(pass_context=True, aliases=['билли', 'интим'])
+@client.command(pass_context=True, aliases=['билли', 'интим', 'Билли'])
 async def Billy(ctx):
     await ctx.send("https://i.ytimg.com/vi/nYkHtNSvgD8/maxresdefault.jpg")
 
@@ -142,7 +144,29 @@ async def kick(ctx, member: discord.Member, *, reason=None):
     await member.kick(reason=reason)
     await ctx.send(f'Мой cum у тебя на лице{member.mention}')
 
+#parser
+R_D = "https://habr.com/ru/news/"
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36'}
+def check_currency():
+    full_page = requests.get(R_D, headers=headers)
 
+    soup = BeautifulSoup(full_page.content, "html.parser")
+
+    convert = soup.find_all('article', {'class': "tm-articles-list__item"})
+
+    author = convert[0].find_next("a", {"class": "tm-user-info__username"}).text
+    title = convert[0].find_next("h2", {"class": "tm-article-snippet__title tm-article-snippet__title_h2"}).text
+    text = convert[0].find_next("div", {"class": "article-formatted-body"}).text
+    tags = convert[0].find_next("span", {"class": "tm-article-snippet__hubs-item"})
+    taglist = []
+    for tag in tags:
+        taglist.append(tag.text)
+
+    @client.command(pass_context=True, aliases=['новость','Новость','News','новое','Новое'])
+    async def news(ctx):
+        await ctx.send('Автор поста:'+author + '\n'+ title + '\n'+ text + '\n' + 'Материал взят с habr.com')
+check_currency()
 # ban
 @client.command(pass_context=True, aliases=["бан"])
 @commands.has_permissions(administrator=True)
@@ -180,6 +204,48 @@ async def mute(ctx, member: discord.Member, time: int = 60):
     await ctx.send(f"{member.mention} Соси молча, и пей моё Wee wee")
     await asyncio.sleep(time)
     await member.remove_roles(mute_role)
+
+
+# Dungeon coin
+connection = sqlite3.connect("server.db")
+cursor = connection.cursor()
+
+
+@client.event
+async def on_ready():
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
+        name TEXT,
+        id INT,
+        cash BIGINT,
+        rep INT,
+        lvl INT,
+    )""")
+    for guild in client.guilds:
+        for member in guild.members:
+            if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+                cursor.execute(f"INSERT INTO user VALUES ('{member}'),{member.id},0,0,1")
+                connection.commit()
+            else:
+                pass
+    connection.commit()
+    print("Bot connected")
+
+@client.event
+async def on_member_join(member):
+    if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+        cursor.execute(f"INSERT INTO user VALUES ('{member}'),{member.id},0,0,1")
+    else:
+        pass
+@client.command(aliases=['balance','cash','Balance','Cash'])
+async def __balance(ctx,member:discord.Member=None):
+    if member is None:
+        await ctx.send(embed = discord.Embed(
+            description=f"""Баланс пользователя**{ctx.author}** Составляет **{cursor.execute("SELECT cash FROM users WHERE id ={}".format(ctx.author.id)).fetchone()[0]}:leaves:**"""
+        ))
+    else:
+        await ctx.send(embed = discord.Embed(
+            description=f"""Баланс пользователя**{member}** Составляет **{cursor.execute("SELECT cash FROM users WHERE id ={}".format(member.id)).fetchone()[0]}:leaves:**"""
+        ))
 
 
 # carduser
