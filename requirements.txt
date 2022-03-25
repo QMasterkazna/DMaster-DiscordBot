@@ -5,3 +5,4 @@ youtube_dl
 PyNaCl
 Pillow~=8.4.0
 Django
+bs4

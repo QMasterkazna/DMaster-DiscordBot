@@ -167,6 +167,7 @@ def check_currency():
     async def news(ctx):
         await ctx.send('Автор поста:'+author + '\n'+ title + '\n'+ text + '\n' + 'Материал взят с habr.com')
 check_currency()
+
 # ban
 @client.command(pass_context=True, aliases=["бан"])
 @commands.has_permissions(administrator=True)
