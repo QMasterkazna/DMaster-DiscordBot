@@ -165,7 +165,10 @@ def check_currency():
 
     @client.command(pass_context=True, aliases=['новость','Новость','News','новое','Новое'])
     async def news(ctx):
-        await ctx.send('Автор поста:'+author + '\n'+ title + '\n'+ text + '\n' + 'Материал взят с habr.com')
+        emb = discord.Embed(title='Автор поста: '+ author)
+        emb.add_field(name=title, value=text)
+        await ctx.send(embed=emb)
+
 check_currency()
 
 # ban
@@ -301,7 +304,7 @@ async def help(ctx):
     emb.add_field(name='{}команды для админов:'.format(command_prefix),
                   value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
     emb.add_field(name='{}команды для пользователей:'.format(command_prefix),
-                  value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
+                  value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun, \nnews')
     await ctx.send(embed=emb)
 
 
