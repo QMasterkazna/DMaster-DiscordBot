@@ -1,3 +1,5 @@
+import time
+
 import discord
 import random
 from discord.ext import commands
@@ -111,6 +113,7 @@ async def MapXp(ctx):
     save()
     await ctx.send('база данных сохранена')
 
+
 @client.command(pass_context=True, aliases=["addxp"])
 @commands.has_permissions(administrator=True)
 async def AddXp(ctx, member: discord.Member, points: int):
@@ -144,11 +147,17 @@ async def kick(ctx, member: discord.Member, *, reason=None):
     await member.kick(reason=reason)
     await ctx.send(f'Мой cum у тебя на лице{member.mention}')
 
-#parser
+
+# parser
 R_D = "https://habr.com/ru/news/"
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36'}
+
+
 def check_currency():
+    global author
+    global title
+    global text
     full_page = requests.get(R_D, headers=headers)
 
     soup = BeautifulSoup(full_page.content, "html.parser")
@@ -163,14 +172,22 @@ def check_currency():
     for tag in tags:
         taglist.append(tag.text)
 
-    @client.command(pass_context=True, aliases=['новость','Новость','News','новое','Новое'])
-    async def news(ctx):
-        emb = discord.Embed(title='Автор поста: '+ author)
-        emb.add_field(name=title, value=text)
-        emb.add_field(name='Материал был взят с сайта habr.com', value='Автор поста: '+ author)
-        await ctx.send(embed=emb)
 
-check_currency()
+def ka():
+    time.sleep(15)
+    check_currency()
+
+
+ka()
+
+
+@client.command(pass_context=True, aliases=['новость', 'Новость', 'News', 'новое', 'Новое'])
+async def news(ctx):
+    emb = discord.Embed(title='Автор поста: ' + author)
+    emb.add_field(name=title, value=text)
+    emb.add_field(name='Материал был взят с сайта habr.com', value='Автор поста: ' + author)
+    await ctx.send(embed=emb)
+
 
 # ban
 @client.command(pass_context=True, aliases=["бан"])
@@ -235,20 +252,23 @@ async def on_ready():
     connection.commit()
     print("Bot connected")
 
+
 @client.event
 async def on_member_join(member):
     if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
         cursor.execute(f"INSERT INTO user VALUES ('{member}'),{member.id},0,0,1")
     else:
         pass
-@client.command(aliases=['balance','cash','Balance','Cash'])
-async def __balance(ctx,member:discord.Member=None):
+
+
+@client.command(aliases=['balance', 'cash', 'Balance', 'Cash'])
+async def __balance(ctx, member: discord.Member = None):
     if member is None:
-        await ctx.send(embed = discord.Embed(
+        await ctx.send(embed=discord.Embed(
             description=f"""Баланс пользователя**{ctx.author}** Составляет **{cursor.execute("SELECT cash FROM users WHERE id ={}".format(ctx.author.id)).fetchone()[0]}:leaves:**"""
         ))
     else:
-        await ctx.send(embed = discord.Embed(
+        await ctx.send(embed=discord.Embed(
             description=f"""Баланс пользователя**{member}** Составляет **{cursor.execute("SELECT cash FROM users WHERE id ={}".format(member.id)).fetchone()[0]}:leaves:**"""
         ))
 
