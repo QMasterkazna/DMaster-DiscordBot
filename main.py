@@ -167,6 +167,7 @@ def check_currency():
     async def news(ctx):
         emb = discord.Embed(title='Автор поста: '+ author)
         emb.add_field(name=title, value=text)
+        emb.add_field(name='Материал был взят с сайта habr.com', value='Автор поста: '+ author)
         await ctx.send(embed=emb)
 
 check_currency()
