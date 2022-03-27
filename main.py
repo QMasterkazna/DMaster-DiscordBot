@@ -148,40 +148,6 @@ async def kick(ctx, member: discord.Member, *, reason=None):
     await ctx.send(f'Мой cum у тебя на лице{member.mention}')
 
 
-# parser
-R_D = "https://habr.com/ru/news/"
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36'}
-
-
-def check_currency():
-    global author
-    global title
-    global text
-    full_page = requests.get(R_D, headers=headers)
-
-    soup = BeautifulSoup(full_page.content, "html.parser")
-
-    convert = soup.find_all('article', {'class': "tm-articles-list__item"})
-
-    author = convert[0].find_next("a", {"class": "tm-user-info__username"}).text
-    title = convert[0].find_next("h2", {"class": "tm-article-snippet__title tm-article-snippet__title_h2"}).text
-    text = convert[0].find_next("div", {"class": "article-formatted-body"}).text
-    tags = convert[0].find_next("span", {"class": "tm-article-snippet__hubs-item"})
-    taglist = []
-    for tag in tags:
-        taglist.append(tag.text)
-
-
-@client.command(pass_context=True, aliases=['новость', 'Новость', 'News', 'новое', 'Новое'])
-async def news(ctx):
-    check_currency()
-    emb = discord.Embed(title='Автор поста: ' + author)
-    emb.add_field(name=title, value=text)
-    emb.add_field(name='Материал был взят с сайта habr.com', value='Автор поста: ' + author)
-    await ctx.send(embed=emb)
-
-
 # ban
 @client.command(pass_context=True, aliases=["бан"])
 @commands.has_permissions(administrator=True)
@@ -318,7 +284,7 @@ async def help(ctx):
     emb.add_field(name='{}команды для админов:'.format(command_prefix),
                   value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
     emb.add_field(name='{}команды для пользователей:'.format(command_prefix),
-                  value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun, \nnews')
+                  value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
     await ctx.send(embed=emb)
 
 
