@@ -173,16 +173,9 @@ def check_currency():
         taglist.append(tag.text)
 
 
-def ka():
-    time.sleep(15)
-    check_currency()
-
-
-ka()
-
-
 @client.command(pass_context=True, aliases=['новость', 'Новость', 'News', 'новое', 'Новое'])
 async def news(ctx):
+    check_currency()
     emb = discord.Embed(title='Автор поста: ' + author)
     emb.add_field(name=title, value=text)
     emb.add_field(name='Материал был взят с сайта habr.com', value='Автор поста: ' + author)
