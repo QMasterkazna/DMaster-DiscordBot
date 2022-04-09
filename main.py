@@ -281,10 +281,16 @@ async def play_custom(ctx):
 @client.command(pass_context=True, aliases=['Помощь', 'Help'])
 async def help(ctx):
     emb = discord.Embed(title='Навигация по командам:')
-    emb.add_field(name='{}команды для админов:'.format(command_prefix),
-                  value='clear,\nban,\nunban,\nmute,\nunmute,\nkick,\nMapXp,\nAddXp')
-    emb.add_field(name='{}команды для пользователей:'.format(command_prefix),
-                  value='Играть, \nпривет, \nБилли, \nstats, \nprofile, \ngym, \ncum, \nwatch, \nrun')
+    emb.add_field(name='{}clear'.format(command_prefix),value='Очистка чата')
+    emb.add_field(name='{}ban'.format(command_prefix),value='Забанить пользователя')
+    emb.add_field(name='{}unban'.format(command_prefix),value='Разбанить пользователя')
+    emb.add_field(name='{}mute'.format(command_prefix),value='Замьютить пользователя')
+    emb.add_field(name='{}unmute'.format(command_prefix),value='Размьютить пользователя')
+    emb.add_field(name='{}kick'.format(command_prefix),value='Кикнуть пользователя')
+    emb.add_field(name='{}Играть,\n {}Привет,\n {}Билли,\n {}gym,\n {}cum,\n {}run'.format(command_prefix,command_prefix,command_prefix,command_prefix,command_prefix,command_prefix),value='Команды для приколюх')
+    emb.add_field(name='{}stats'.format(command_prefix),value='Статистика сервера')
+    emb.add_field(name='{}watch'.format(command_prefix),value='Смотреть ютуб')
+    emb.add_field(name='{}profile'.format(command_prefix),value='Профиль пользователя')
     await ctx.send(embed=emb)
 
 
@@ -324,6 +330,29 @@ async def watch(ctx):
 
     link = json.loads(response.content)
     await ctx.send(f"https://discord.com/invite/{link['code']}")
+
+
+R_D2 = "https://habr.com/ru/news/"
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'}
+
+#
+# # parser
+# @client.command(aliases=['news', 'News'])
+# async def _news(ctx):
+#     full_page = requests.get(R_D2, headers=headers)
+#     while True:
+#         soup = BeautifulSoup(full_page.content, "html.parser")
+#         author = soup.find('a', {'class': 'tm-user-info__username'}).text
+#         context = soup.find('a', {'class': "tm-article-snippet__title-link"}).text
+#         description = soup.find('div', {'class': "article-formatted-body article-formatted-body_version-2"}).text
+#         if context == context:
+#             print('новых записей нет')
+#         elif context != context:
+#             await channel.send(content=('Автор поста: ' + author + '\n ' + context + '\n ' + description))
+#         else:
+#             print('ошибка')
 
 
 @client.command(aliases=['stats', 'ss'])
