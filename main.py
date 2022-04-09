@@ -277,20 +277,59 @@ async def play_custom(ctx):
     await ctx.author.send(' ♂️That turns me on!♂️')
 
 
+# create.DeleteText
+@client.command()
+@commands.has_permissions(administrator=True)
+async def voice(ctx, name, channel: int = None):
+    guild = ctx.message.guild
+    await guild.create_voice_channel(name=name, category=client.get_channel(channel))
+    await ctx.send(f"Я создал этот {name} голосовой канал для тебя пупсик :Billy_herrington: ")
+
+
+@client.command()
+@commands.has_permissions(administrator=True)
+async def text(ctx, name, channel: int = None):
+    guild = ctx.message.guild
+    await guild.create_text_channel(name=name, category=client.get_channel(channel))
+    await ctx.send(f"Я создал этот {name} текстовый канал для тебя пупсик :Billy_herrington:")
+
+#deleteText.Voice
+@client.command()
+@commands.has_permissions(administrator=True)
+async def deletevoice(ctx, voicechannel: discord.VoiceChannel):
+    await voicechannel.delete()
+    await ctx.send(f"Я удалил это канал")
+
+
+@client.command()
+@commands.has_permissions(administrator=True)
+async def deletetext(ctx, channel: discord.TextChannel):
+    await channel.delete()
+    await ctx.send(f"Я удалил этот канал")
+
+
 # help
 @client.command(pass_context=True, aliases=['Помощь', 'Help'])
 async def help(ctx):
     emb = discord.Embed(title='Навигация по командам:')
-    emb.add_field(name='{}clear'.format(command_prefix),value='Очистка чата')
-    emb.add_field(name='{}ban'.format(command_prefix),value='Забанить пользователя')
-    emb.add_field(name='{}unban'.format(command_prefix),value='Разбанить пользователя')
-    emb.add_field(name='{}mute'.format(command_prefix),value='Замьютить пользователя')
-    emb.add_field(name='{}unmute'.format(command_prefix),value='Размьютить пользователя')
-    emb.add_field(name='{}kick'.format(command_prefix),value='Кикнуть пользователя')
-    emb.add_field(name='{}Играть,\n {}Привет,\n {}Билли,\n {}gym,\n {}cum,\n {}run'.format(command_prefix,command_prefix,command_prefix,command_prefix,command_prefix,command_prefix),value='Команды для приколюх')
-    emb.add_field(name='{}stats'.format(command_prefix),value='Статистика сервера')
-    emb.add_field(name='{}watch'.format(command_prefix),value='Смотреть ютуб')
-    emb.add_field(name='{}profile'.format(command_prefix),value='Профиль пользователя')
+    emb.add_field(name='{}clear'.format(command_prefix), value='Очистка чата')
+    emb.add_field(name='{}ban'.format(command_prefix), value='Забанить пользователя')
+    emb.add_field(name='{}unban'.format(command_prefix), value='Разбанить пользователя')
+    emb.add_field(name='{}mute'.format(command_prefix), value='Замьютить пользователя')
+    emb.add_field(name='{}unmute'.format(command_prefix), value='Размьютить пользователя')
+    emb.add_field(name='{}kick'.format(command_prefix), value='Кикнуть пользователя')
+    emb.add_field(name='{}text'.format(command_prefix), value='Создать текстовый канал')
+    emb.add_field(name='{}voice'.format(command_prefix), value='Создать голосовой канал')
+    emb.add_field(name='{}deletetext'.format(command_prefix), value='Удалить канал')
+    emb.add_field(name='{}deletevoice'.format(command_prefix), value='Удалить голосовой')
+    emb.add_field(
+        name='{}Играть,\n {}Привет,\n {}Билли,\n {}gym,\n {}cum,\n {}run'.format(command_prefix, command_prefix,
+                                                                                 command_prefix, command_prefix,
+                                                                                 command_prefix, command_prefix),
+        value='Команды для приколюх')
+    emb.add_field(name='{}stats'.format(command_prefix), value='Статистика сервера')
+    emb.add_field(name='{}watch'.format(command_prefix), value='Смотреть ютуб')
+    emb.add_field(name='{}profile'.format(command_prefix), value='Профиль пользователя')
     await ctx.send(embed=emb)
 
 
@@ -336,6 +375,7 @@ R_D2 = "https://habr.com/ru/news/"
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'}
+
 
 #
 # # parser
