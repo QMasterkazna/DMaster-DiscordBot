@@ -10,7 +10,6 @@ import asyncio
 import json
 import youtube_dl
 from datetime import datetime
-import _pickle as pkl
 import colorama as col
 import ConfigConstants as CC
 from math import sqrt, floor
@@ -29,96 +28,203 @@ dataBase = {}
 
 playlist = []
 isPlayingNow = False
-logger = Logger.Logger()
+
+connection = sqlite3.connect('Bank.db')
+cursor = connection.cursor()
 
 
-def CalcXpByFormula(x):
-    n = (x ** 2) + 15
-    return n
+# dungeon coin
+@client.event
+async def on_ready():
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
+        name TEXT,
+        id INT,
+        cash BIGINT,
+        rep INT,
+        lvl INT,
+        server_id INT
+    )""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS shop(
+        role_id INT,
+        id INT,
+        cost BIGINT
+    )""")
+    for guild in client.guilds:
+        for member in guild.members:
+            if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+                cursor.execute(f"INSERT INTO users VALUES ('{member}',{member.id}, 0, 0, 1, {guild.id})")
+            else:
+                pass
+    connection.commit()
 
 
-def CalcDifferenceOfLevels(x):
-    n = (((x + 1) ** 2) + 15) - ((x ** 2) + 15)
-    return n
-
-
-def DrawProgressBar(x):
-    filled = "═"
-    empty = "─"
-    symbolCount = 20
-    filledSymbols = int(symbolCount * x)
-    progressbar = ""
-
-    for i in range(filledSymbols):
-        progressbar += filled
-
-    for f in range(symbolCount - filledSymbols):
-        progressbar += empty
-
-    progressbar += f" {round(x * 100, 1)}%"
-
-    return progressbar
-
-
-def FindLevelByXp(x):
-    x = x if x >= 15 else 15
-    n = floor(sqrt(x - 15)) + 1
-    return n
-
-
-def init():
-    load()
-    # TODO:
-
-
-def load():
-    global dataBase
-    # TODO: load database from database.pkl file to dataBase variable
-    input = open(filename, "rb")
-    try:
-        dataBase = pkl.load(input)
-        input.close()
-    except EOFError:
-        logger.warn("Файл пустой", "Load")
-    except FileNotFoundError:
-        logger.warn("Файл не найден", "Load")
-
-
-def save():
-    output = open(filename, "wb")
-
-    pkl.dump(dataBase, output, 2)
-    logger.log("База Данных сохранена", "Save")
-
-
-def AddXpToUser(amount, UserId):
-    global dataBase
-    dataBase[UserId] += amount
-    logger.log(f"Added XP to {UserId} + {amount}", "AddXp")
-    save()
-
-
-def GetUserXp(UserId):
-    return dataBase[UserId]
-
-
-@client.command(pass_context=True, aliases=["xpmap"])
+@client.command(aliases=['addshop', 'add-shop'])
 @commands.has_permissions(administrator=True)
-async def MapXp(ctx):
-    global dataBase
-    members = ctx.guild.members
-    for member in members:
-        if dataBase.get(member.id) is None:
-            dataBase[member.id] = 0
-    save()
-    await ctx.send('база данных сохранена')
+async def __add_shop(ctx, role: discord.Role = None, cost: int = None):
+    if role is None:
+        await ctx.send(f"**{ctx.author}**, укажите роль, которую вы желаете внести в магазин")
+        await ctx.message.add_reaction('❎')
+    else:
+        if cost is None:
+            await ctx.send(f"**{ctx.author}**, укажите стоимость роли")
+            await ctx.message.add_reaction('❎')
+        elif cost < 0:
+            await ctx.send(f"**{ctx.author}**, стоимость роли не может быть такой маленькой")
+            await ctx.message.add_reaction('❎')
+        else:
+            cursor.execute("INSERT INTO shop VALUES ({},{},{})".format(role.id, ctx.guild.id, cost))
+            connection.commit()
+            await ctx.message.add_reaction('✅')
 
 
-@client.command(pass_context=True, aliases=["addxp"])
+@client.command(aliases=['removerole', 'remove-role'])
 @commands.has_permissions(administrator=True)
-async def AddXp(ctx, member: discord.Member, points: int):
-    AddXpToUser(points, member.id)
-    await ctx.send('Профиль изменён')
+async def __remove_role(ctx, role: discord.Role = None):
+    if role is None:
+        await ctx.send(f"**{ctx.author}**, укажите роль, которую вы желайте удалить")
+        await ctx.message.add_reaction('❎')
+    else:
+        cursor.execute("DELETE FROM shop WHERE role_id = {}".format(role.id))
+        await ctx.message.add_reaction('✅')
+
+
+@client.command(aliases=['shop'])
+async def __shop(ctx):
+    embed = discord.Embed(title='Магазин Ролей')
+    for row in cursor.execute("SELECT role_id, cost FROM shop WHERE id = {}".format(ctx.guild.id)):
+        if ctx.guild.get_role(row[0]) != None:
+            embed.add_field(
+                name=f"Стоимость {row[1]}",
+                value=f"Вы приобрете роль {ctx.guild.get_role(row[0]).mention}",
+                inline=False
+            )
+        else:
+            pass
+    await ctx.send(embed=embed)
+
+
+@client.command(aliases=['buy', 'buy-role'])
+async def __buy(ctx, role: discord.Role = None):
+    if role is None:
+        await ctx.send(f"**{ctx.author}**, укажите роль, которую вы желаете приобрести")
+    else:
+        if role in ctx.author.roles:
+            await ctx.send(f"**{ctx.author}**, у вас уже есть данная роль")
+            await ctx.message.add_reaction('❎')
+        elif cursor.execute("SELECT cost FROM shop WHERE role_id = {}".format(role.id)).fetchone()[0] > \
+                cursor.execute("SELECT cash FROM users WHERE id ={}".format(ctx.author.id)).fetchone()[0]:
+            await ctx.send(f"**{ctx.author}**,у вас недостаточно средств для покупки")
+            await ctx.message.add_reaction('❎')
+        else:
+            await ctx.author.add_roles(role)
+            cursor.execute("UPDATE users SET cash = cash - {0} WHERE id = {1}".format(
+                cursor.execute("SELECT cost FROM shop WHERE role_id = {}".format(role.id)).fetchone()[0],
+                ctx.author.id))
+            connection.commit()
+            await ctx.message.add_reaction('✅')
+
+
+@client.event
+async def on_member_join(member):
+    if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+        cursor.execute(f"INSERT INTO users VALUES ('{member}',{member.id}, 0, 0, 1, {member.guild.id})")
+        connection.commit()
+    else:
+        pass
+
+
+@client.command(aliases=['balance', 'cash'])
+async def ___balance(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send(embed=discord.Embed(
+            description=f"""Баланс пользователя **{ctx.author}** составляет **{cursor.execute("SELECT cash FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]}**:coin:"""
+        ))
+    else:
+        await ctx.send(embed=discord.Embed(
+            description=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT cash FROM users WHERE id = {}".format(member.id)).fetchone()[0]}**:coin:"""
+        ))
+@client.command(aliases=['work','работа'])
+async def __work(ctx):
+    zp = random.randint(1, 100)
+    cursor.execute("UPDATE users SET cash = cash + {} WHERE id = {}".format(zp, ctx.author.id))
+    connection.commit()
+
+    embed = discord.Embed(title='Работа')
+    embed.add_field(
+        name = 'Ваш баланс:',
+        value=f'{cursor.execute("SELECT cash FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]}',
+        inline = False
+    )
+    await ctx.send(embed=embed)
+@client.command(aliases=['award'])
+@commands.has_permissions(administrator=True)
+async def __award(ctx, member: discord.Member = None, amount: int = None):
+    if member is None:
+        await ctx.send(f"**{ctx.author}**, укажите пользователя, которому желаете выдать определенную сумму")
+        await ctx.message.add_reaction('❎')
+    else:
+        if amount is None:
+            await ctx.send(f"**{ctx.author}**, укажите сумму которую выхотите выдать")
+            await ctx.message.add_reaction('❎')
+        elif amount < 1:
+            await ctx.send(f"**{ctx.author}**,укажите сумму больше 1 :coin:")
+            await ctx.message.add_reaction('❎')
+        else:
+            cursor.execute("UPDATE users SET cash = cash + {} WHERE id = {}".format(amount, member.id))
+            connection.commit()
+            await ctx.message.add_reaction('✅')
+
+
+@client.command(aliases=['take'])
+@commands.has_permissions(administrator=True)
+async def __take(ctx, member: discord.Member = None, amount=None):
+    if member is None:
+        await ctx.send(f"**{ctx.author}**, укажите пользователя, которому желаете отнять определенную сумму")
+        await ctx.message.add_reaction('❎')
+    else:
+        if amount is None:
+            await ctx.send(f"**{ctx.author}**, укажите сумму которую выхотите отнять")
+            await ctx.message.add_reaction('❎')
+        elif amount == 'all':
+            cursor.execute("UPDATE users SET cash = {} WHERE id = {}".format(0, member.id))
+            connection.commit()
+            await ctx.message.add_reaction('✅')
+
+        elif int(amount) < 1:
+            await ctx.send(f"**{ctx.author}**,укажите сумму больше 1 :coin:")
+            await ctx.message.add_reaction('❎')
+        else:
+            cursor.execute("UPDATE users SET cash = cash - {} WHERE id = {}".format(int(amount), member.id))
+            connection.commit()
+            await ctx.message.add_reaction('✅')
+
+
+@client.command(aliases=['rep', '+rep'])
+async def __rep(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send(f"**{ctx.author}**, укажите участника сервера")
+    else:
+        if member.id == ctx.author.id:
+            await ctx.send(f'**{ctx.author}**, вы не можете указать самого себя')
+        else:
+            cursor.execute("UPDATE users SET rep = rep + {} WHERE id = {}".format(1, member.id))
+            connection.commit()
+            await ctx.message.add_reaction('✅')
+
+
+@client.command(aliases=['lb', 'leaderboard'])
+async def __leaderboard(ctx):
+    embed = discord.Embed(title='Топ 10 сервера')
+    counter = 0
+    for row in cursor.execute(
+            "SELECT name, cash FROM users WHERE server_id = {} ORDER BY cash DESC LIMIT 10".format(ctx.guild.id)):
+        counter += 1
+        embed.add_field(
+            name=f"# {counter} | {row[0]}",
+            value=f"Баланс: {row[1]}",
+            inline=False
+        )
+    await ctx.send(embed=embed)
 
 
 # clear message
@@ -187,68 +293,22 @@ async def mute(ctx, member: discord.Member, time: int = 60):
     await member.remove_roles(mute_role)
 
 
-# Dungeon coin
-connection = sqlite3.connect("server.db")
-cursor = connection.cursor()
-
-
-@client.event
-async def on_ready():
-    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-        name TEXT,
-        id INT,
-        cash BIGINT,
-        rep INT,
-        lvl INT,
-    )""")
-    for guild in client.guilds:
-        for member in guild.members:
-            if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
-                cursor.execute(f"INSERT INTO user VALUES ('{member}'),{member.id},0,0,1")
-                connection.commit()
-            else:
-                pass
-    connection.commit()
-    print("Bot connected")
-
-
-@client.event
-async def on_member_join(member):
-    if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
-        cursor.execute(f"INSERT INTO user VALUES ('{member}'),{member.id},0,0,1")
-    else:
-        pass
-
-
-@client.command(aliases=['balance', 'cash', 'Balance', 'Cash'])
-async def __balance(ctx, member: discord.Member = None):
-    if member is None:
-        await ctx.send(embed=discord.Embed(
-            description=f"""Баланс пользователя**{ctx.author}** Составляет **{cursor.execute("SELECT cash FROM users WHERE id ={}".format(ctx.author.id)).fetchone()[0]}:leaves:**"""
-        ))
-    else:
-        await ctx.send(embed=discord.Embed(
-            description=f"""Баланс пользователя**{member}** Составляет **{cursor.execute("SELECT cash FROM users WHERE id ={}".format(member.id)).fetchone()[0]}:leaves:**"""
-        ))
-
-
-# carduser
-@client.command(aliases=['я', 'карта'])
-async def profile(ctx, member: discord.Member = None):
-    # TODO: make database work properly
-    # TODO: Заставить базу данных работать правильно
-    if member is None:
-        member = ctx.author
-
-    emb = discord.embeds.Embed(title=f"{member.name}#{member.discriminator}")
-    emb.add_field(name=f"id: {member.id}", value=f"status:{member.status}")
-    emb.add_field(name=f"XP: {dataBase.get(member.id)}", value=f"Level {FindLevelByXp(dataBase.get(member.id))}")
-    emb.add_field(name=f'Level Progress',
-                  value=f"{DrawProgressBar((dataBase.get(member.id)) / (CalcXpByFormula(FindLevelByXp(dataBase.get(member.id)))))}",
-                  inline=False)
-    emb.set_image(url=member.avatar_url)
-    await ctx.send(embed=emb)
-
+# # carduser
+# @client.command(aliases=['я', 'карта'])
+# async def profile(ctx, member: discord.Member = None):
+    #
+#     if member is None:
+#         member = ctx.author
+#
+#     emb = discord.embeds.Embed(title=f"{member.name}#{member.discriminator}")
+#     emb.add_field(name=f"id: {member.id}", value=f"status:{member.status}")
+#     emb.add_field(name=f"XP: {dataBase.get(member.id)}", value=f"Level {FindLevelByXp(dataBase.get(member.id))}")
+#     emb.add_field(name=f'Level Progress',
+#                   value=f"{DrawProgressBar((dataBase.get(member.id)) / (CalcXpByFormula(FindLevelByXp(dataBase.get(member.id)))))}",
+#                   inline=False)
+#     emb.set_image(url=member.avatar_url)
+#     await ctx.send(embed=emb)
+#
 
 # unmute
 @client.command(aliases=['размьют'])
@@ -293,7 +353,8 @@ async def text(ctx, name, channel: int = None):
     await guild.create_text_channel(name=name, category=client.get_channel(channel))
     await ctx.send(f"Я создал этот {name} текстовый канал для тебя пупсик :Billy_herrington:")
 
-#deleteText.Voice
+
+# deleteText.Voice
 @client.command()
 @commands.has_permissions(administrator=True)
 async def deletevoice(ctx, voicechannel: discord.VoiceChannel):
@@ -377,24 +438,6 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'}
 
 
-#
-# # parser
-# @client.command(aliases=['news', 'News'])
-# async def _news(ctx):
-#     full_page = requests.get(R_D2, headers=headers)
-#     while True:
-#         soup = BeautifulSoup(full_page.content, "html.parser")
-#         author = soup.find('a', {'class': 'tm-user-info__username'}).text
-#         context = soup.find('a', {'class': "tm-article-snippet__title-link"}).text
-#         description = soup.find('div', {'class': "article-formatted-body article-formatted-body_version-2"}).text
-#         if context == context:
-#             print('новых записей нет')
-#         elif context != context:
-#             await channel.send(content=('Автор поста: ' + author + '\n ' + context + '\n ' + description))
-#         else:
-#             print('ошибка')
-
-
 @client.command(aliases=['stats', 'ss'])
 async def server_stats(ctx: discord.ext.commands.Context):
     embed = discord.embeds.Embed()
@@ -431,30 +474,6 @@ async def server_stats(ctx: discord.ext.commands.Context):
                     value=f"Онлайн: {online}\n\n оффлайн: {offline} \n\n Не беспокоить: {dnd} \n\n Не активен: {idle}")
     await ctx.send("Стата", embed=embed)
 
-
-async def RemapOnStart():
-    global dataBase
-    for guild in client.guilds:
-        logger.log(f"Mapping XP on start for {guild}", "RemapOnStart")
-        members = guild.members
-        for member in members:
-            logger.log(f"Mapped XP on start for {member} with id {member.id}", "RemapOnStart")
-            if dataBase.get(member.id) is None:
-                dataBase[member.id] = 0
-        save()
-
-
-@client.event
-async def on_connect():
-    await RemapOnStart()
-
-
-@client.event
-async def on_ready():
-    await RemapOnStart()
-
-
-init()
 
 # Connect
 client.run(Token)
