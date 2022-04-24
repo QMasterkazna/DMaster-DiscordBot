@@ -425,6 +425,7 @@ async def help(ctx):
         value='Посмотреть топ пользователей'
     )
 
+
 @client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
 async def hello(ctx):
     author = ctx.message.author
