@@ -143,7 +143,9 @@ async def ___balance(ctx, member: discord.Member = None):
         await ctx.send(embed=discord.Embed(
             description=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT cash FROM users WHERE id = {}".format(member.id)).fetchone()[0]}**:coin:"""
         ))
-@client.command(aliases=['work','работа'])
+
+
+@client.command(aliases=['work', 'работа'])
 async def __work(ctx):
     zp = random.randint(1, 100)
     cursor.execute("UPDATE users SET cash = cash + {} WHERE id = {}".format(zp, ctx.author.id))
@@ -151,11 +153,13 @@ async def __work(ctx):
 
     embed = discord.Embed(title='Работа')
     embed.add_field(
-        name = 'Ваш баланс:',
+        name='Ваш баланс:',
         value=f'{cursor.execute("SELECT cash FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]}',
-        inline = False
+        inline=False
     )
     await ctx.send(embed=embed)
+
+
 @client.command(aliases=['award'])
 @commands.has_permissions(administrator=True)
 async def __award(ctx, member: discord.Member = None, amount: int = None):
@@ -296,7 +300,7 @@ async def mute(ctx, member: discord.Member, time: int = 60):
 # # carduser
 # @client.command(aliases=['я', 'карта'])
 # async def profile(ctx, member: discord.Member = None):
-    #
+#
 #     if member is None:
 #         member = ctx.author
 #
