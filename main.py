@@ -395,8 +395,35 @@ async def help(ctx):
     emb.add_field(name='{}stats'.format(command_prefix), value='Статистика сервера')
     emb.add_field(name='{}watch'.format(command_prefix), value='Смотреть ютуб')
     emb.add_field(name='{}profile'.format(command_prefix), value='Профиль пользователя')
+    emb.add_field(
+        name = '{}balance/cash'.format(command_prefix),
+        value= 'Посмотреть баланс кошелька'
+    )
+    emb.add_field(
+        name= '{}work'.format(command_prefix),
+        value = 'Работа, для заработка денег'
+    )
+    emb.add_field(
+        name= '{}shop'.format(command_prefix),
+        value='Открыть магазин ролей'
+    )
+    emb.add_field(
+        name='{}buy'.format(command_prefix),
+        value='Купить роль'
+    )
+    emb.add_field(
+        name='{}addshop'.format(command_prefix),
+        value='Добавить роль в магазин, чтобы её оттуда убрать {}removerole'.format(command_prefix)
+    )
     await ctx.send(embed=emb)
-
+    emb.add_field(
+        name='{}rep'.format(command_prefix),
+        value='Добавить репутацию пользователю'
+    )
+    emb.add_field(
+        name='{}leaderboard'.format(command_prefix),
+        value='Посмотреть топ пользователей'
+    )
 
 @client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
 async def hello(ctx):

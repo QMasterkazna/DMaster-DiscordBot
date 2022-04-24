@@ -1,0 +1,103 @@
+# def CalcXpByFormula(x):
+#     n = (x ** 2) + 15
+#     return n
+#
+#
+# def CalcDifferenceOfLevels(x):
+#     n = (((x + 1) ** 2) + 15) - ((x ** 2) + 15)
+#     return n
+#
+#
+# def DrawProgressBar(x):
+#     filled = "═"
+#     empty = "─"
+#     symbolCount = 20
+#     filledSymbols = int(symbolCount * x)
+#     progressbar = ""
+#
+#     for i in range(filledSymbols):
+#         progressbar += filled
+#
+#     for f in range(symbolCount - filledSymbols):
+#         progressbar += empty
+#
+#     progressbar += f" {round(x * 100, 1)}%"
+#
+#     return progressbar
+#
+#
+# def FindLevelByXp(x):
+#     x = x if x >= 15 else 15
+#     n = floor(sqrt(x - 15)) + 1
+#     return n
+#
+#
+# def init():
+#     load()
+#     #
+#
+#
+# def load():
+#     global dataBase
+#     #
+#     input = open(filename, "rb")
+#     try:
+#         dataBase = pkl.load(input)
+#         input.close()
+#     except EOFError:
+#         logger.warn("Файл пустой", "Load")
+#     except FileNotFoundError:
+#         logger.warn("Файл не найден", "Load")
+#
+#
+# def save():
+#     output = open(filename, "wb")
+#
+#     pkl.dump(dataBase, output, 2)
+#     logger.log("База Данных сохранена", "Save")
+#
+#
+# def AddXpToUser(amount, UserId):
+#     global dataBase
+#     dataBase[UserId] += amount
+#     logger.log(f"Added XP to {UserId} + {amount}", "AddXp")
+#     save()
+#
+#
+# def GetUserXp(UserId):
+#     return dataBase[UserId]
+# @client.command(pass_context=True, aliases=["xpmap"])
+# @commands.has_permissions(administrator=True)
+# async def MapXp(ctx):
+#     global dataBase
+#     members = ctx.guild.members
+#     for member in members:
+#         if dataBase.get(member.id) is None:
+#             dataBase[member.id] = 0
+#     save()
+#     await ctx.send('база данных сохранена')
+#
+#
+# @client.command(pass_context=True, aliases=["addxp"])
+# @commands.has_permissions(administrator=True)
+# async def AddXp(ctx, member: discord.Member, points: int):
+#     AddXpToUser(points, member.id)
+#     await ctx.send('Профиль изменён')
+# async def RemapOnStart():
+#     global dataBase
+#     for guild in client.guilds:
+#         logger.log(f"Mapping XP on start for {guild}", "RemapOnStart")
+#         members = guild.members
+#         for member in members:
+#             logger.log(f"Mapped XP on start for {member} with id {member.id}", "RemapOnStart")
+#             if dataBase.get(member.id) is None:
+#                 dataBase[member.id] = 0
+#         save()
+@client.event
+# async def on_connect():
+#     await RemapOnStart()
+#
+#
+# @client.event
+# async def on_ready():
+#     await RemapOnStart()
