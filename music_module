@@ -34,12 +34,12 @@
 #
 # def init():
 #     load()
-#     #
+#     # TODO:
 #
 #
 # def load():
 #     global dataBase
-#     #
+#     # TODO: load database from database.pkl file to dataBase variable
 #     input = open(filename, "rb")
 #     try:
 #         dataBase = pkl.load(input)
@@ -101,3 +101,25 @@
 # @client.event
 # async def on_ready():
 #     await RemapOnStart()
+BaseData:
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users(
+        name TEXT,
+        id INT,
+        cash BIGINT,
+        rep INT,
+        lvl INT,
+        xp BITINT,
+        server_id INT
+    )""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS shop(
+        role_id INT,
+        id INT,
+        cost BIGINT
+    )""")
+    for guild in client.guilds:
+        for member in guild.members:
+            if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+                cursor.execute(f"INSERT INTO users VALUES ('{member}',{member.id}, 0, 0, 1,0, {guild.id})")
+            else:
+                pass
+    connection.commit()

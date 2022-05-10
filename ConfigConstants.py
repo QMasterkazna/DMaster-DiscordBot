@@ -1,4 +1,4 @@
-Token = 'ODgwMDg3MjgwNTA3ODEzOTMw.YSZLJg.g7e7-MSwduvQxL6OVNdzIeGDXWw'
+Token = 'ODgwMDg3MjgwNTA3ODEzOTMw.GpxM_W.Q7CyLxID07D3mW8_3ZTGTdf10yz36YCEGJBr8I'
 filename = "database.pkl"
 # img = Image.new('RGBA', (400, 200), '#232529')
 # url = str(ctx.author.avatar_url)[:-10]

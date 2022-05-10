@@ -1,23 +1,16 @@
-import time
-
 import discord
 import random
 from discord.ext import commands
 import requests
-from PIL import Image, ImageFont, ImageDraw
-import io
 import asyncio
 import json
-import youtube_dl
 from datetime import datetime
-import colorama as col
 import ConfigConstants as CC
-from math import sqrt, floor
-import Logger
 import sqlite3
-from bs4 import BeautifulSoup
 from music_module import Music
-import status
+import math
+import requests
+from bs4 import BeautifulSoup
 
 command_prefix = ';/'
 Token = CC.Token
@@ -29,7 +22,7 @@ dataBase = {}
 playlist = []
 isPlayingNow = False
 
-connection = sqlite3.connect('Bank.db')
+connection = sqlite3.connect('bank.db')
 cursor = connection.cursor()
 
 
@@ -37,25 +30,27 @@ cursor = connection.cursor()
 @client.event
 async def on_ready():
     cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-        name TEXT,
-        id INT,
-        cash BIGINT,
-        rep INT,
-        lvl INT,
-        server_id INT
-    )""")
+            name TEXT,
+            id INT,
+            cash BIGINT,
+            rep INT,
+            lvl INT,
+            xp BITINT,
+            server_id INT
+        )""")
     cursor.execute("""CREATE TABLE IF NOT EXISTS shop(
-        role_id INT,
-        id INT,
-        cost BIGINT
-    )""")
+            role_id INT,
+            id INT,
+            cost BIGINT
+        )""")
     for guild in client.guilds:
         for member in guild.members:
             if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
-                cursor.execute(f"INSERT INTO users VALUES ('{member}',{member.id}, 0, 0, 1, {guild.id})")
+                cursor.execute(f"INSERT INTO users VALUES ('{member}',{member.id}, 0, 0, 1,0, {guild.id})")
             else:
                 pass
     connection.commit()
+    print('Я ПРОСНУЛСЯ МОЙ ГОСПОДИН!')
 
 
 @client.command(aliases=['addshop', 'add-shop'])
@@ -77,6 +72,27 @@ async def __add_shop(ctx, role: discord.Role = None, cost: int = None):
             await ctx.message.add_reaction('✅')
 
 
+@client.command(aliases=['grab', 'robbery'])
+@commands.cooldown(1, 3600, commands.BucketType.user)
+async def __grab(ctx, member: discord.Member = None):
+    if member is None:
+        await ctx.send('Укажите пользователя которого вы хотите ограбить')
+        await ctx.message.add_reaction('❎')
+
+    rand = random.randint(1, 2)
+    rand1 = rand
+    if rand1 == 1:
+        cash = random.randint(1, 100)
+        cash1 = cash
+        cursor.execute('UPDATE users SET cash = cash - {} WHERE id = {}'.format(cash1, member.id))
+        cursor.execute('UPDATE users SET cash = cash + {} WHERE id = {}'.format(cash1, ctx.author.id))
+        await ctx.send('Вы успешно ограбили {}, на {}'.format(member, cash1))
+        await ctx.message.add_reaction('✅')
+        connection.commit()
+    elif rand1 == 2:
+        await ctx.reply('Вы не успешно ограбили {}'.format(member))
+
+
 @client.command(aliases=['removerole', 'remove-role'])
 @commands.has_permissions(administrator=True)
 async def __remove_role(ctx, role: discord.Role = None):
@@ -86,6 +102,7 @@ async def __remove_role(ctx, role: discord.Role = None):
     else:
         cursor.execute("DELETE FROM shop WHERE role_id = {}".format(role.id))
         await ctx.message.add_reaction('✅')
+    connection.commit()
 
 
 @client.command(aliases=['shop'])
@@ -98,9 +115,8 @@ async def __shop(ctx):
                 value=f"Вы приобрете роль {ctx.guild.get_role(row[0]).mention}",
                 inline=False
             )
-        else:
-            pass
     await ctx.send(embed=embed)
+    connection.commit()
 
 
 @client.command(aliases=['buy', 'buy-role'])
@@ -126,11 +142,9 @@ async def __buy(ctx, role: discord.Role = None):
 
 @client.event
 async def on_member_join(member):
-    if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
+    if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchall() is None:
         cursor.execute(f"INSERT INTO users VALUES ('{member}',{member.id}, 0, 0, 1, {member.guild.id})")
         connection.commit()
-    else:
-        pass
 
 
 @client.command(aliases=['balance', 'cash'])
@@ -141,13 +155,21 @@ async def ___balance(ctx, member: discord.Member = None):
         ))
     else:
         await ctx.send(embed=discord.Embed(
-            description=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT cash FROM users WHERE id = {}".format(member.id)).fetchone()[0]}**:coin:"""
+            description=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT cash FROM users WHERE id = {}".format(member.id, )).fetchone()[0]}**:coin:"""
         ))
 
 
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        msg = ('**Вы уже выполняли это действие**, пожалуйста повторите через {:.2f}s'.format(error.retry_after))
+        await ctx.send(msg)
+
+
 @client.command(aliases=['work', 'работа'])
+@commands.cooldown(1, 600, commands.BucketType.user)
 async def __work(ctx):
-    zp = random.randint(1, 100)
+    zp = random.randint(1, 1000)
     cursor.execute("UPDATE users SET cash = cash + {} WHERE id = {}".format(zp, ctx.author.id))
     connection.commit()
 
@@ -158,6 +180,88 @@ async def __work(ctx):
         inline=False
     )
     await ctx.send(embed=embed)
+    await ctx.message.add_reaction('✅')
+
+
+def LevelToXp(level):
+    return 3 * level ** 2
+
+
+def Difference(xp):
+    return LevelToXp(math.ceil(math.sqrt(xp / 3))) - (xp - 1)
+
+
+@client.event
+async def on_message(message):
+    if message.author.bot:
+        print('Алё это бот')
+    elif ';/' in message.content:
+        print('Алё это команда')
+    else:
+        cursor.execute("UPDATE users SET xp = xp + {} WHERE id = {}".format(1, message.author.id))  # Обновляем xp на +1
+    connection.commit()
+    await client.process_commands(message)
+
+
+@client.command(aliases=['addxp', 'Addxp', 'add-xp'])
+@commands.has_permissions(administrator=True)
+async def __add_xp(ctx, member: discord.Member = None, exp: int = None):
+    if member is None:
+        await ctx.send('Укажите пользователя')
+        await ctx.message.add_reaction('❎')
+    elif exp is None:
+        await ctx.send('Укажите количество exp которое вы хотите добавить')
+        await ctx.message.add_reaction('❎')
+    else:
+        cursor.execute("UPDATE users SET xp = xp + {} WHERE id = {}".format(exp, member.id))
+        await ctx.send('Я обновил exp у данного пользователя: {} exp'.format(member))
+        await ctx.message.add_reaction('✅')
+        connection.commit()
+
+
+@client.command(aliases=['deletexp', 'DeleteXp'])
+@commands.has_permissions(administrator=True)
+async def __deletexp(ctx, member: discord.Member = None, exp: int = None):
+    if member is None:
+        await ctx.send('Укажите пользователя')
+        await ctx.message.add_reaction('❎')
+    elif exp is None:
+        await ctx.send('Укажите количество exp которое вы хотите убрать')
+        await ctx.message.add_reaction('❎')
+    else:
+        cursor.execute("UPDATE users SET xp = xp - {} WHERE id = {}".format(exp, member.id))
+        await ctx.send('Я убрал у данного пользователя: {}, столько exp: {}'.format(member, exp))
+        await ctx.message.add_reaction('✅')
+        connection.commit()
+
+
+url = 'https://habr.com/ru/news/'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.141 Safari/537.36'}
+
+
+def parser():
+    global convert
+    global author
+    global zaga
+    full_page = requests.get(url, headers=headers)
+
+    soup = BeautifulSoup(full_page.content, "html.parser")
+
+    author = soup.find('a', {'class': "tm-user-info__username"})
+    zaga = soup.find('a', {'class': "tm-article-snippet__title-link"})
+
+
+@client.command(aliases=['news', 'News', 'Новости', 'новости'])
+async def __news(ctx):
+    parser()
+    embed = discord.Embed(title='Материал был взят из habr.com', url='https://habr.com/ru/news/')
+    embed.add_field(
+        name=f'{author.text}',
+        value=f'{zaga.text}',
+        inline=False
+    )
+    await ctx.reply(embed=embed)
 
 
 @client.command(aliases=['award'])
@@ -204,6 +308,7 @@ async def __take(ctx, member: discord.Member = None, amount=None):
 
 
 @client.command(aliases=['rep', '+rep'])
+@commands.cooldown(1, 5000, commands.BucketType.user)
 async def __rep(ctx, member: discord.Member = None):
     if member is None:
         await ctx.send(f"**{ctx.author}**, укажите участника сервера")
@@ -216,44 +321,20 @@ async def __rep(ctx, member: discord.Member = None):
             await ctx.message.add_reaction('✅')
 
 
-@client.command(aliases=['lb', 'leaderboard'])
-async def __leaderboard(ctx):
-    embed = discord.Embed(title='Топ 10 сервера')
-    counter = 0
-    for row in cursor.execute(
-            "SELECT name, cash FROM users WHERE server_id = {} ORDER BY cash DESC LIMIT 10".format(ctx.guild.id)):
-        counter += 1
-        embed.add_field(
-            name=f"# {counter} | {row[0]}",
-            value=f"Баланс: {row[1]}",
-            inline=False
-        )
-    await ctx.send(embed=embed)
-
-
 # clear message
 @client.command(pass_context=True, aliases=["очистка", 'clear'])
 @commands.has_permissions(administrator=True)
-async def Clear(ctx, amount=100):
-    await ctx.channel.purge(limit=amount)
-
-
-# clear command
-@client.command(pass_context=True, aliases=['билли', 'интим', 'Билли'])
-async def Billy(ctx):
-    await ctx.send("https://i.ytimg.com/vi/nYkHtNSvgD8/maxresdefault.jpg")
-
-
-@client.command(pass_context=True)
-async def run(ctx):
-    await ctx.send("https://tenor.com/view/billy-herrington-herington-beach-party-gif-22706556")
+async def Clear(ctx, amount=None):
+    if amount == None:
+        await ctx.reply('Укажите количество')
+    else:
+        await ctx.channel.purge(limit=amount)
 
 
 # Kick
 @client.command(pass_context=True, aliases=['кик'])
 @commands.has_permissions(administrator=True)
 async def kick(ctx, member: discord.Member, *, reason=None):
-    await ctx.channel.purge(limit=1)
     await member.kick(reason=reason)
     await ctx.send(f'Мой cum у тебя на лице{member.mention}')
 
@@ -261,29 +342,45 @@ async def kick(ctx, member: discord.Member, *, reason=None):
 # ban
 @client.command(pass_context=True, aliases=["бан"])
 @commands.has_permissions(administrator=True)
-async def ban(ctx, member: discord.Member, *, reason=None):
-    await ctx.channel.purge(limit=1)
+async def ban(ctx, member: discord.Member = None, *, reason=None):
+    if member is None:
+        await ctx.send('Укажите пользователя, которого вы хотите забанить')
+        await ctx.message.add_reaction('❎')
+
     await member.ban(reason=reason)
-    await ctx.send(f'Отправляйся в ASS, теперь ты f@cking slave{member.mention}')
+    time = datetime.now()
+    embed = discord.embeds.Embed(title=f'Забанен {member}')
+    embed.add_field(
+        name='Время бана',
+        value=f'{time}'
+    )
+    embed.add_field(
+        name='Причина',
+        value=f'{reason}'
+    )
+    embed.set_author(
+        name=f"{member}",
+        icon_url=f'{member.avatar_url}'
+    )
+    await ctx.send(embed=embed)
 
 
 # unban
 @client.command(pass_context=True, aliases=["разбан"])
 @commands.has_permissions(administrator=True)
 async def unban(ctx, *, member):
-    await ctx.channel.purge(limit=1)
+    time = datetime.now()
     banned_users = await ctx.guild.bans()
     for ban_entry in banned_users:
         user = ban_entry.user
         await ctx.guild.unban(user)
-        await ctx.send(f"Boy nextdoor вернулся к Dungeon master{user.mention}")
+        embed = discord.embeds.Embed(title=f'Разбанен {user.mention}')
+        embed.add_field(
+            name='Время разбана',
+            value=f'{time}'
+        )
+        await ctx.send(embed=embed)
         return
-
-
-@client.command(aliases=['пошли в gym', 'хочу в gym'])
-async def gym(ctx):
-    author = ctx.message.author
-    await ctx.send(f'♂{author.mention},Пошли со мной в Gym♂')
 
 
 # mute
@@ -297,22 +394,31 @@ async def mute(ctx, member: discord.Member, time: int = 60):
     await member.remove_roles(mute_role)
 
 
-# # carduser
-# @client.command(aliases=['я', 'карта'])
-# async def profile(ctx, member: discord.Member = None):
-#
-#     if member is None:
-#         member = ctx.author
-#
-#     emb = discord.embeds.Embed(title=f"{member.name}#{member.discriminator}")
-#     emb.add_field(name=f"id: {member.id}", value=f"status:{member.status}")
-#     emb.add_field(name=f"XP: {dataBase.get(member.id)}", value=f"Level {FindLevelByXp(dataBase.get(member.id))}")
-#     emb.add_field(name=f'Level Progress',
-#                   value=f"{DrawProgressBar((dataBase.get(member.id)) / (CalcXpByFormula(FindLevelByXp(dataBase.get(member.id)))))}",
-#                   inline=False)
-#     emb.set_image(url=member.avatar_url)
-#     await ctx.send(embed=emb)
-#
+def XpToLevel(xp):
+    return math.floor(math.sqrt(xp / 3))
+
+
+# carduser
+@client.command(aliases=['я', 'карта'])
+async def profile(ctx, member: discord.Member = None):
+    if member is None:
+        member = ctx.author
+    xp = cursor.execute("SELECT xp FROM users WHERE id = {}".format(member.id)).fetchone()[0]
+    emb = discord.embeds.Embed(title=f"{member.name}#{member.discriminator}")
+    emb.add_field(
+        name=f"id: {member.id}", value=f"status:{member.status}"
+    )
+    emb.add_field(
+        name=f"XP:{cursor.execute('SELECT xp FROM users WHERE id = {}'.format(member.id)).fetchone()[0]} ",
+        value=f"Level: {XpToLevel(xp)} to next {Difference(xp)}"
+    )
+    emb.add_field(
+        name='Rep',
+        value=f'{cursor.execute("SELECT rep FROM users WHERE id = {}".format(member.id)).fetchone()[0]}'
+    )
+    emb.set_image(url=member.avatar_url)
+    await ctx.send(embed=emb)
+
 
 # unmute
 @client.command(aliases=['размьют'])
@@ -324,21 +430,9 @@ async def unmute(ctx, member: discord.Member):
     await ctx.send(f"{member.mention}Заканчивай, и держи свои Three hundred bucks")
 
 
-@client.command()
-async def cum(ctx):
-    await ctx.send(
-        'https://tenor.com/view/tyler1-autism-brennan-jrinking-cum-form-dada-drinking-water-in-less-than5seconds-cum-gif-17755097')
-
-
 # Silence useless bug reports messages
 
 client.add_cog(Music(client))
-
-
-# LS
-@client.command(pass_context=True, aliases=['Играть'])
-async def play_custom(ctx):
-    await ctx.author.send(' ♂️That turns me on!♂️')
 
 
 # create.DeleteText
@@ -372,6 +466,16 @@ async def deletetext(ctx, channel: discord.TextChannel):
     await channel.delete()
     await ctx.send(f"Я удалил этот канал")
 
+@client.command()
+async def hmusic(ctx):
+    embed=discord.Embed(title='Комманды по музыке')
+    embed.add_field(name='{}play [название или ссылка на видео]'.format(command_prefix), value='Запуск музыки')
+    embed.add_field(name='{}leave'.format(command_prefix), value='Бот выйдет из голосового')
+    embed.add_field(name='{}skip'.format(command_prefix), value='Пропустить музыку')
+    embed.add_field(name='{}join'.format(command_prefix), value='Добавить бота в голосовой канал')
+    embed.add_field(name='{}now'.format(command_prefix), value='Посмотреть что сейчас играет')
+    await ctx.send(embed=embed)
+
 
 # help
 @client.command(pass_context=True, aliases=['Помощь', 'Help'])
@@ -387,24 +491,20 @@ async def help(ctx):
     emb.add_field(name='{}voice'.format(command_prefix), value='Создать голосовой канал')
     emb.add_field(name='{}deletetext'.format(command_prefix), value='Удалить канал')
     emb.add_field(name='{}deletevoice'.format(command_prefix), value='Удалить голосовой')
-    emb.add_field(
-        name='{}Играть,\n {}Привет,\n {}Билли,\n {}gym,\n {}cum,\n {}run'.format(command_prefix, command_prefix,
-                                                                                 command_prefix, command_prefix,
-                                                                                 command_prefix, command_prefix),
-        value='Команды для приколюх')
     emb.add_field(name='{}stats'.format(command_prefix), value='Статистика сервера')
     emb.add_field(name='{}watch'.format(command_prefix), value='Смотреть ютуб')
     emb.add_field(name='{}profile'.format(command_prefix), value='Профиль пользователя')
+    emb.add_field(name='{}hmusic'.format(command_prefix), value='Помощь в музыке')
     emb.add_field(
-        name = '{}balance/cash'.format(command_prefix),
-        value= 'Посмотреть баланс кошелька'
+        name='{}balance/cash'.format(command_prefix),
+        value='Посмотреть баланс кошелька'
     )
     emb.add_field(
-        name= '{}work'.format(command_prefix),
-        value = 'Работа, для заработка денег'
+        name='{}work'.format(command_prefix),
+        value='Работа, для заработка денег'
     )
     emb.add_field(
-        name= '{}shop'.format(command_prefix),
+        name='{}shop'.format(command_prefix),
         value='Открыть магазин ролей'
     )
     emb.add_field(
@@ -415,7 +515,6 @@ async def help(ctx):
         name='{}addshop'.format(command_prefix),
         value='Добавить роль в магазин, чтобы её оттуда убрать {}removerole'.format(command_prefix)
     )
-    await ctx.send(embed=emb)
     emb.add_field(
         name='{}rep'.format(command_prefix),
         value='Добавить репутацию пользователю'
@@ -424,12 +523,7 @@ async def help(ctx):
         name='{}leaderboard'.format(command_prefix),
         value='Посмотреть топ пользователей'
     )
-
-
-@client.command(pass_context=True, aliases=["Привет", "Здарова", 'здарова'])
-async def hello(ctx):
-    author = ctx.message.author
-    await ctx.send(f"{author.mention}приветики, я Билли, рад познакомиться, мой мальчик")
+    await ctx.send(embed=emb)
 
 
 # Смотреть ютуб
@@ -464,12 +558,6 @@ async def watch(ctx):
     await ctx.send(f"https://discord.com/invite/{link['code']}")
 
 
-R_D2 = "https://habr.com/ru/news/"
-
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36'}
-
-
 @client.command(aliases=['stats', 'ss'])
 async def server_stats(ctx: discord.ext.commands.Context):
     embed = discord.embeds.Embed()
@@ -499,7 +587,7 @@ async def server_stats(ctx: discord.ext.commands.Context):
             idle += 1
         elif member.raw_status == "dnd":
             dnd += 1
-
+    embed.set_footer(text=str(ctx.message.guild.name), icon_url=ctx.guild.icon_url)
     embed.add_field(name="\n:busts_in_silhouette: Члены :busts_in_silhouette:",
                     value=f"🤖 Боты: {Botsies}\n\n :bust_in_silhouette: Люди: {Realman} \n\n :busts_in_silhouette: Всего: {MemberCount}")
     embed.add_field(name="\nПо статусу",
