@@ -78,19 +78,22 @@ async def __grab(ctx, member: discord.Member = None):
     if member is None:
         await ctx.send('Укажите пользователя которого вы хотите ограбить')
         await ctx.message.add_reaction('❎')
-
-    rand = random.randint(1, 2)
-    rand1 = rand
-    if rand1 == 1:
-        cash = random.randint(1, 100)
-        cash1 = cash
-        cursor.execute('UPDATE users SET cash = cash - {} WHERE id = {}'.format(cash1, member.id))
-        cursor.execute('UPDATE users SET cash = cash + {} WHERE id = {}'.format(cash1, ctx.author.id))
-        await ctx.send('Вы успешно ограбили {}, на {}'.format(member, cash1))
-        await ctx.message.add_reaction('✅')
-        connection.commit()
-    elif rand1 == 2:
-        await ctx.reply('Вы не успешно ограбили {}'.format(member))
+    elif member is ctx.author:
+        await ctx.send('Нельзя грабить самого себя')
+    else:
+        rand = random.randint(1, 2)
+        rand1 = rand
+        print(rand1)
+        if rand1 == 1:
+            cash = random.randint(1, 100)
+            cash1 = cash
+            cursor.execute('UPDATE users SET cash = cash - {} WHERE id = {}'.format(cash1, member.id))
+            cursor.execute('UPDATE users SET cash = cash + {} WHERE id = {}'.format(cash1, ctx.author.id))
+            await ctx.send('Вы успешно ограбили {}, на {}'.format(member, cash1))
+            await ctx.message.add_reaction('✅')
+            connection.commit()
+        else:
+            await ctx.reply('Вы не успешно ограбили {}'.format(member))
 
 
 @client.command(aliases=['removerole', 'remove-role'])
@@ -121,6 +124,7 @@ async def __shop(ctx):
 
 @client.command(aliases=['buy', 'buy-role'])
 async def __buy(ctx, role: discord.Role = None):
+    time = datetime.now()
     if role is None:
         await ctx.send(f"**{ctx.author}**, укажите роль, которую вы желаете приобрести")
     else:
@@ -138,6 +142,17 @@ async def __buy(ctx, role: discord.Role = None):
                 ctx.author.id))
             connection.commit()
             await ctx.message.add_reaction('✅')
+            embed = discord.embeds.Embed(title=f'пользователь: **{ctx.author}**, приобрел роль: {role}')
+            embed.add_field(
+                name= 'Вы приобрели роль: ',
+                value = f'{role}'
+            )
+            embed.add_field(
+                name = 'Время приобретения: ',
+                value = f'День: {time.day} Часы: {time.hour} Минуты: {time.minute} Секунды: {time.second}',
+                inline = False
+            )
+            await ctx.send(embed=embed)
 
 
 @client.event
@@ -170,13 +185,14 @@ async def on_command_error(ctx, error):
 @commands.cooldown(1, 600, commands.BucketType.user)
 async def __work(ctx):
     zp = random.randint(1, 1000)
-    cursor.execute("UPDATE users SET cash = cash + {} WHERE id = {}".format(zp, ctx.author.id))
+    zp1 = zp
+    cursor.execute("UPDATE users SET cash = cash + {} WHERE id = {}".format(zp1, ctx.author.id))
     connection.commit()
 
     embed = discord.Embed(title='Работа')
     embed.add_field(
-        name='Ваш баланс:',
-        value=f'{cursor.execute("SELECT cash FROM users WHERE id = {}".format(ctx.author.id)).fetchone()[0]}',
+        name='Вы заработали:',
+        value=f'{zp1}',
         inline=False
     )
     await ctx.send(embed=embed)
@@ -187,8 +203,8 @@ def LevelToXp(level):
     return 3 * level ** 2
 
 
-def Difference(xp):
-    return LevelToXp(math.ceil(math.sqrt(xp / 3))) - (xp - 1)
+# def Difference(xp):
+#     return LevelToXp(math.ceil(math.sqrt(xp / 3))) - (xp - 1)
 
 
 @client.event
@@ -244,13 +260,14 @@ def parser():
     global convert
     global author
     global zaga
+    global time
     full_page = requests.get(url, headers=headers)
 
     soup = BeautifulSoup(full_page.content, "html.parser")
 
     author = soup.find('a', {'class': "tm-user-info__username"})
     zaga = soup.find('a', {'class': "tm-article-snippet__title-link"})
-
+    time = soup.find('span', {'class':"tm-article-snippet__datetime-published"})
 
 @client.command(aliases=['news', 'News', 'Новости', 'новости'])
 async def __news(ctx):
@@ -258,7 +275,7 @@ async def __news(ctx):
     embed = discord.Embed(title='Материал был взят из habr.com', url='https://habr.com/ru/news/')
     embed.add_field(
         name=f'{author.text}',
-        value=f'{zaga.text}',
+        value=f'{zaga.text} \n время публикации: **{time.text}**',
         inline=False
     )
     await ctx.reply(embed=embed)
@@ -324,8 +341,8 @@ async def __rep(ctx, member: discord.Member = None):
 # clear message
 @client.command(pass_context=True, aliases=["очистка", 'clear'])
 @commands.has_permissions(administrator=True)
-async def Clear(ctx, amount=None):
-    if amount == None:
+async def Clear(ctx, amount=100):
+    if amount is None:
         await ctx.reply('Укажите количество')
     else:
         await ctx.channel.purge(limit=amount)
@@ -334,9 +351,17 @@ async def Clear(ctx, amount=None):
 # Kick
 @client.command(pass_context=True, aliases=['кик'])
 @commands.has_permissions(administrator=True)
-async def kick(ctx, member: discord.Member, *, reason=None):
-    await member.kick(reason=reason)
-    await ctx.send(f'Мой cum у тебя на лице{member.mention}')
+async def kick(ctx, member: discord.Member = None, *, reason=None):
+    time= datetime.now()
+    if member is None:
+        await ctx.send('Укажите пользователя для того чтобы его кикнуть')
+    else:
+        embed = discord.embeds.Embed(title='Кикнут')
+        embed.add_field(name='Время: ', value=f'часы: {time.hour} \n минуты: {time.minute} \n секунды: {time.second}')
+        embed.add_field(name='Пользователь: ', value=f'{member} , \n был кикнут')
+        embed.add_field(name='Причина: ', value=f'{reason}')
+        await member.kick(reason=reason)
+        await ctx.send(embed=embed)
 
 
 # ban
@@ -349,13 +374,17 @@ async def ban(ctx, member: discord.Member = None, *, reason=None):
 
     await member.ban(reason=reason)
     time = datetime.now()
-    embed = discord.embeds.Embed(title=f'Забанен {member}')
+    embed = discord.embeds.Embed(title=f'Забанен')
     embed.add_field(
-        name='Время бана',
-        value=f'{time}'
+        name='Пользователь: ',
+        value=f'{member.mention}'
     )
     embed.add_field(
-        name='Причина',
+        name='Время бана:',
+        value=f'часы: {time.hour} \n минуты: {time.minute} \n секунды: {time.second}'
+    )
+    embed.add_field(
+        name='Причина:',
         value=f'{reason}'
     )
     embed.set_author(
@@ -374,10 +403,14 @@ async def unban(ctx, *, member):
     for ban_entry in banned_users:
         user = ban_entry.user
         await ctx.guild.unban(user)
-        embed = discord.embeds.Embed(title=f'Разбанен {user.mention}')
+        embed = discord.embeds.Embed(title=f'Разбанен')
+        embed.add_field(
+            name='Пользователь: ',
+            value=f'{user.mention}'
+        )
         embed.add_field(
             name='Время разбана',
-            value=f'{time}'
+            value=f'часы: {time.hour} \n минуты: {time.minute} \n секунды: {time.second}'
         )
         await ctx.send(embed=embed)
         return
@@ -386,12 +419,29 @@ async def unban(ctx, *, member):
 # mute
 @client.command(pass_context=True, aliases=['мьют'])
 @commands.has_permissions(administrator=True)
-async def mute(ctx, member: discord.Member, time: int = 60):
+async def mute(ctx, member: discord.Member = None, reason=None, time: int = None):
+    time1 = datetime.now()
+    if member is None:
+        await ctx.send('Укажите пользователя чтобы его замьютить')
     mute_role = discord.utils.get(ctx.message.guild.roles, name='Muted')
-    await member.add_roles(mute_role)
-    await ctx.send(f"{member.mention} Соси молча, и пей моё Wee wee")
-    await asyncio.sleep(time)
-    await member.remove_roles(mute_role)
+    if time is None:
+        await member.add_roles(mute_role)
+        embed = discord.embeds.Embed(title='Мьют выдан')
+        embed.add_field(name='Пользователю: ', value=f'{member.mention}')
+        embed.add_field(name='Время выдачи: ', value=f'{datetime.now()}')
+        embed.add_field(name='Причина: ', value=f'{reason}')
+        embed.add_field(name='На: ', value=f'часы: {time1.hour} \n минуты: {time1.minute} \n секунды: {time1.second}')
+        await ctx.send(embed=embed)
+    else:
+        await member.add_roles(mute_role)
+        embed = discord.embeds.Embed(title='Мьют выдан')
+        embed.add_field(name='Пользователю: ', value=f'{member.mention}')
+        embed.add_field(name='Время выдачи: ', value=f'часы: {time1.hour} \n минуты: {time1.minute} \n секунды: {time1.second}')
+        embed.add_field(name='Причина: ', value=f'{reason}')
+        embed.add_field(name='На: ', value=f'{time}')
+        await ctx.send(embed=embed)
+        await asyncio.sleep(time)
+        await member.remove_roles(mute_role)
 
 
 def XpToLevel(xp):
@@ -410,7 +460,7 @@ async def profile(ctx, member: discord.Member = None):
     )
     emb.add_field(
         name=f"XP:{cursor.execute('SELECT xp FROM users WHERE id = {}'.format(member.id)).fetchone()[0]} ",
-        value=f"Level: {XpToLevel(xp)} to next {Difference(xp)}"
+        value=f"Level: {XpToLevel(xp)}"
     )
     emb.add_field(
         name='Rep',
@@ -423,11 +473,17 @@ async def profile(ctx, member: discord.Member = None):
 # unmute
 @client.command(aliases=['размьют'])
 @commands.has_permissions(administrator=True)
-async def unmute(ctx, member: discord.Member):
-    await ctx.channel.purge(limit=1)
-    mute_role = discord.utils.get(ctx.message.guild.roles, name='Muted')
-    await member.remove_roles(mute_role)
-    await ctx.send(f"{member.mention}Заканчивай, и держи свои Three hundred bucks")
+async def unmute(ctx, member: discord.Member = None):
+    time = datetime.now()
+    if member is None:
+        await ctx.send('Укажите пользователя которого хотите размьютить')
+    else:
+        mute_role = discord.utils.get(ctx.message.guild.roles, name='Muted')
+        await member.remove_roles(mute_role)
+        embed = discord.embeds.Embed(title='Размьют')
+        embed.add_field(name='Пользователь: ', value=f'{member.mention}')
+        embed.add_field(name='Время: ', value=f'часы: {time.hour} \n минуты: {time.minute} \n секунды: {time.second}')
+        await ctx.send(embed=embed)
 
 
 # Silence useless bug reports messages
@@ -466,9 +522,10 @@ async def deletetext(ctx, channel: discord.TextChannel):
     await channel.delete()
     await ctx.send(f"Я удалил этот канал")
 
+
 @client.command()
 async def hmusic(ctx):
-    embed=discord.Embed(title='Комманды по музыке')
+    embed = discord.Embed(title='Комманды по музыке')
     embed.add_field(name='{}play [название или ссылка на видео]'.format(command_prefix), value='Запуск музыки')
     embed.add_field(name='{}leave'.format(command_prefix), value='Бот выйдет из голосового')
     embed.add_field(name='{}skip'.format(command_prefix), value='Пропустить музыку')
@@ -518,10 +575,6 @@ async def help(ctx):
     emb.add_field(
         name='{}rep'.format(command_prefix),
         value='Добавить репутацию пользователю'
-    )
-    emb.add_field(
-        name='{}leaderboard'.format(command_prefix),
-        value='Посмотреть топ пользователей'
     )
     await ctx.send(embed=emb)
 
