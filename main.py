@@ -497,15 +497,15 @@ client.add_cog(Music(client))
 async def voice(ctx, name, channel: int = None):
     guild = ctx.message.guild
     await guild.create_voice_channel(name=name, category=client.get_channel(channel))
-    await ctx.send(f"Я создал этот {name} голосовой канал для тебя пупсик :Billy_herrington: ")
+    await ctx.send(f"Я создал этот {name} голосовой канал")
 
 
 @client.command()
 @commands.has_permissions(administrator=True)
-async def text(ctx, name, channel: int = None):
+async def text(ctx, name = None, channel: int = None):
     guild = ctx.message.guild
     await guild.create_text_channel(name=name, category=client.get_channel(channel))
-    await ctx.send(f"Я создал этот {name} текстовый канал для тебя пупсик :Billy_herrington:")
+    await ctx.send(f"Я создал этот {name} текстовый канал")
 
 
 # deleteText.Voice
